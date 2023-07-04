@@ -13,6 +13,20 @@ const OK_200_STATUS: &'static str = "200 OK";
 const ROOT_PATH: &'static str = "/";
 const INDEX_FILE: &'static str = "/index.html";
 
+struct Headers {
+    content_type: String,
+    content_length: usize,
+}
+
+impl Headers {
+    fn to_string(&self) -> String {
+        format!(
+            "Content-Type: {}\r\nContent-Length: {}\r\n",
+            self.content_type, self.content_length
+        )
+    }
+}
+
 fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
 
@@ -43,21 +57,22 @@ fn handle_connection(mut stream: TcpStream) -> String {
     if content.is_none() {
         return request_path;
     }
+    let (response_body, response_type) = content.unwrap();
 
     let status = format!("{} {}", HTTP_VERSION, OK_200_STATUS);
-    let (contents, file_type) = content.unwrap();
-    let length = contents.len();
-    let content_type = get_content_type(&file_type);
+    let headers = Headers {
+        content_length: response_body.len(),
+        content_type: get_content_type(&response_type),
+    }
+    .to_string();
 
-    match stream.write_all(
-        &[
-            format!("{status}\r\nContent-Type: {content_type}\r\nContent-Length: {length}\r\n\r\n")
-                .as_bytes()
-                .to_owned(),
-            contents,
-        ]
-        .concat(),
-    ) {
+    let response = [
+        format!("{status}\r\n{headers}\r\n").as_bytes().to_owned(),
+        response_body,
+    ]
+    .concat();
+
+    match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
         _ => (),
     }

@@ -17,8 +17,14 @@ endif
 build:
 	cargo build
 
+release:
+	cargo build --release
+
 run:
 	cargo run
+
+run-release:
+	cargo run --release
 
 watch:
 	cargo watch -w $(SRC_DIR) -x run

@@ -1,3 +1,4 @@
+use flate2::{write::GzEncoder, Compression};
 use std::{
     fs,
     io::{prelude::*, BufReader},
@@ -5,7 +6,6 @@ use std::{
     thread,
     time::Instant,
 };
-use flate2::{write::{GzEncoder}, Compression};
 
 const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
@@ -59,6 +59,7 @@ fn handle_connection(mut stream: TcpStream) -> String {
         return request_path;
     }
     let (response_body, response_type) = content.unwrap();
+    let response_body = gzip_response_body(&response_body);
 
     let status = format!("{} {}", HTTP_VERSION, OK_200_STATUS);
     let headers = Headers {
@@ -69,7 +70,7 @@ fn handle_connection(mut stream: TcpStream) -> String {
 
     let response = [
         format!("{status}\r\n{headers}\r\n").as_bytes().to_owned(),
-        gzip_response_body(&response_body),
+        response_body,
     ]
     .concat();
 
@@ -141,6 +142,9 @@ fn gzip_response_body(response_body: &[u8]) -> Vec<u8> {
 
     match encoder.finish() {
         Ok(compressed_response) => compressed_response,
-        Err(error) => panic!("Error occured while finishing encoding response => {:.2?}", error),
+        Err(error) => panic!(
+            "Error occured while finishing encoding response => {:.2?}",
+            error
+        ),
     }
 }

@@ -5,6 +5,7 @@ use std::{
     thread,
     time::Instant,
 };
+use flate2::{write::{GzEncoder}, Compression};
 
 const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
@@ -21,7 +22,7 @@ struct Headers {
 impl Headers {
     fn to_string(&self) -> String {
         format!(
-            "Content-Type: {}\r\nContent-Length: {}\r\n",
+            "Content-Encoding: gzip\r\nContent-Type: {}\r\nContent-Length: {}\r\n",
             self.content_type, self.content_length
         )
     }
@@ -68,7 +69,7 @@ fn handle_connection(mut stream: TcpStream) -> String {
 
     let response = [
         format!("{status}\r\n{headers}\r\n").as_bytes().to_owned(),
-        response_body,
+        gzip_response_body(&response_body),
     ]
     .concat();
 
@@ -127,5 +128,19 @@ fn get_contents(filename: &str) -> Option<(Vec<u8>, String)> {
             println!("For {} => {:?}", path, error_message);
             None
         }
+    }
+}
+
+fn gzip_response_body(response_body: &[u8]) -> Vec<u8> {
+    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
+
+    let encoding_body_result = encoder.write_all(response_body);
+    if encoding_body_result.is_err() {
+        panic!("Error occured while encoding body")
+    }
+
+    match encoder.finish() {
+        Ok(compressed_response) => compressed_response,
+        Err(error) => panic!("Error occured while finishing encoding response => {:.2?}", error),
     }
 }

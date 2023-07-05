@@ -13,4 +13,5 @@
 - `choco install k6`
 - `k6 run -vus 10 loadtest.js`
 
-Tokio vs Threadpool
+Threadpool vs Tokio
+![Threadpool vs Tokio](https://github.com/SpandanBG/learning-rust-web-server/blob/master/tokio_vs_threadpool_load_test.png?raw=true)

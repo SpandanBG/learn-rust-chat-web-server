@@ -1,9 +1,9 @@
 use flate2::{write::GzEncoder, Compression};
+use tokio;
 use std::{
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
-    thread,
     time::Instant,
 };
 
@@ -28,21 +28,20 @@ impl Headers {
     }
 }
 
-fn main() {
+#[tokio::main(flavor = "multi_thread", worker_threads = 16)]
+async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
         match maybe_stream {
-            Ok(stream) => { thread::spawn(move || {
-                handle_connection(stream, now);
-            }); ()},
+            Ok(stream) => { tokio::spawn(handle_connection(stream, now)); ()},
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }
 }
 
-fn handle_connection(stream: TcpStream, now: Instant) {
+async fn handle_connection(stream: TcpStream, now: Instant) {
     let request_path = respond(stream);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);

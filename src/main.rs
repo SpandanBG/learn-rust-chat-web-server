@@ -3,9 +3,9 @@ use std::{
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
+    thread,
     time::Instant,
 };
-use tokio;
 
 const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
@@ -28,20 +28,21 @@ impl Headers {
     }
 }
 
-#[tokio::main(worker_threads = 16)]
-async fn main() {
+fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
         match maybe_stream {
-            Ok(stream) => { tokio::spawn(handle_connection(stream, now)); ()},
+            Ok(stream) => { thread::spawn(move || {
+                handle_connection(stream, now);
+            }); ()},
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }
 }
 
-async fn handle_connection(stream: TcpStream, now: Instant) {
+fn handle_connection(stream: TcpStream, now: Instant) {
     let request_path = respond(stream);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);

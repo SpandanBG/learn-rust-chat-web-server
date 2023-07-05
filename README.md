@@ -12,3 +12,5 @@
 # Load Testing with K6
 - `choco install k6`
 - `k6 run -vus 10 loadtest.js`
+
+Tokio vs Threadpool

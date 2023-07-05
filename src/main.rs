@@ -1,8 +1,10 @@
 use flate2::{write::GzEncoder, Compression};
 use std::{
+    collections::HashMap,
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
+    sync::{Arc, RwLock},
     thread,
     time::Instant,
 };
@@ -30,25 +32,34 @@ impl Headers {
 
 fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
+    let shared_cache = Arc::new(RwLock::new(HashMap::new()));
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
+        let shared = Arc::clone(&shared_cache);
         match maybe_stream {
-            Ok(stream) => { thread::spawn(move || {
-                handle_connection(stream, now);
-            }); ()},
+            Ok(stream) => {
+                thread::spawn(move || {
+                    handle_connection(stream, now, shared);
+                });
+                ()
+            }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }
 }
 
-fn handle_connection(stream: TcpStream, now: Instant) {
-    let request_path = respond(stream);
+fn handle_connection(
+    stream: TcpStream,
+    now: Instant,
+    shared: Arc<RwLock<HashMap<String, Vec<u8>>>>,
+) {
+    let request_path = respond(stream, shared);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
 }
 
-fn respond(mut stream: TcpStream) -> String {
+fn respond(mut stream: TcpStream, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) -> String {
     let buf_reader = BufReader::new(&stream);
 
     let request_path = get_request_path(buf_reader);
@@ -56,6 +67,16 @@ fn respond(mut stream: TcpStream) -> String {
         return String::new();
     }
     let request_path = request_path.unwrap();
+
+    if let Ok(shared_cache) = shared.read() {
+        if let Some(response) = shared_cache.get(&request_path) {
+            match stream.write_all(response) {
+                Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
+                _ => (),
+            }
+            return request_path;
+        }
+    }
 
     let content = get_contents(&request_path);
     if content.is_none() {
@@ -76,6 +97,10 @@ fn respond(mut stream: TcpStream) -> String {
         response_body,
     ]
     .concat();
+
+    if let Ok(mut shared_cache) = shared.write() {
+        shared_cache.insert(request_path.clone(), response.clone());
+    }
 
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),

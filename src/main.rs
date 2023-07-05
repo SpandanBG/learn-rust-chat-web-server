@@ -1,9 +1,9 @@
 use flate2::{write::GzEncoder, Compression};
+use threadpool::ThreadPool;
 use std::{
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
-    thread,
     time::Instant,
 };
 
@@ -13,6 +13,7 @@ const RESOURCE_DIRECTORY: &'static str = "res";
 const OK_200_STATUS: &'static str = "200 OK";
 const ROOT_PATH: &'static str = "/";
 const INDEX_FILE: &'static str = "/index.html";
+const NUMBER_OF_THREADS: usize = 16;
 
 struct Headers {
     content_type: String,
@@ -30,13 +31,12 @@ impl Headers {
 
 fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
+    let pool = ThreadPool::new(NUMBER_OF_THREADS);
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
         match maybe_stream {
-            Ok(stream) => { thread::spawn(move || {
-                handle_connection(stream, now);
-            }); ()},
+            Ok(stream) => { pool.execute(move || handle_connection(stream, now)); ()},
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }

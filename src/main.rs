@@ -3,9 +3,9 @@ use std::{
     fs,
     io::{prelude::*, BufReader},
     net::{TcpListener, TcpStream},
-    thread,
     time::Instant,
 };
+use tokio;
 
 const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
@@ -28,24 +28,26 @@ impl Headers {
     }
 }
 
-fn main() {
+#[tokio::main(worker_threads = 16)]
+async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
 
     for maybe_stream in listener.incoming() {
-        if let Ok(stream) = maybe_stream {
-            thread::spawn(move || {
-                let now = Instant::now();
-                let request_path = handle_connection(stream);
-                let elapsed = now.elapsed();
-                println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
-            });
-        } else if let Err(error) = maybe_stream {
-            println!("Error occured with a connection => {:.2?}", error);
+        match maybe_stream {
+            Ok(stream) => { tokio::spawn(handle_connection(stream)); ()},
+            Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }
 }
 
-fn handle_connection(mut stream: TcpStream) -> String {
+async fn handle_connection(stream: TcpStream) {
+    let now = Instant::now();
+    let request_path = respond(stream);
+    let elapsed = now.elapsed();
+    println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
+}
+
+fn respond(mut stream: TcpStream) -> String {
     let buf_reader = BufReader::new(&stream);
 
     let request_path = get_request_path(buf_reader);

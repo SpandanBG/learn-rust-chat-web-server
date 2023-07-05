@@ -33,15 +33,15 @@ async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
 
     for maybe_stream in listener.incoming() {
+        let now = Instant::now();
         match maybe_stream {
-            Ok(stream) => { tokio::spawn(handle_connection(stream)); ()},
+            Ok(stream) => { tokio::spawn(handle_connection(stream, now)); ()},
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
         }
     }
 }
 
-async fn handle_connection(stream: TcpStream) {
-    let now = Instant::now();
+async fn handle_connection(stream: TcpStream, now: Instant) {
     let request_path = respond(stream);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);

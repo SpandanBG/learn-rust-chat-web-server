@@ -8,3 +8,7 @@
 
 # Hyperfine (App benchmarking tool)
 [Install form here](https://github.com/sharkdp/hyperfine)
+
+# Load Testing with K6
+- `choco install k6`
+- `k6 run -vus 10 loadtest.js`

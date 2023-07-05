@@ -37,3 +37,6 @@ lighthouse:
 
 clean-lighthouse:
 	$(RM) $(LIGHTHOUSE_FILE) 
+
+load-test:
+	k6 run loadtest.js

@@ -1,4 +1,5 @@
 use flate2::{write::GzEncoder, Compression};
+use tokio;
 use std::{
     collections::HashMap,
     fs,
@@ -30,7 +31,8 @@ impl Headers {
     }
 }
 
-fn main() {
+#[tokio::main(flavor = "multi_thread", worker_threads = 16)]
+async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
     let shared_cache = Arc::new(RwLock::new(HashMap::new()));
 

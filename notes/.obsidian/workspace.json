@@ -11,14 +11,11 @@
             "id": "48308f0c09450ef0",
             "type": "leaf",
             "state": {
-              "type": "canvas",
+              "type": "markdown",
               "state": {
-                "file": "Mind-Map.canvas",
-                "viewState": {
-                  "x": 864.8724342906171,
-                  "y": -414.9822093790095,
-                  "zoom": -1.3905761080074266
-                }
+                "file": "Notes/Handle HTTP Response.md",
+                "mode": "source",
+                "source": false
               }
             }
           }
@@ -88,7 +85,7 @@
             "state": {
               "type": "backlink",
               "state": {
-                "file": "Mind-Map.canvas",
+                "file": "Notes/Handle HTTP Response.md",
                 "collapseAll": false,
                 "extraContext": false,
                 "sortOrder": "alphabetical",
@@ -105,7 +102,7 @@
             "state": {
               "type": "outgoing-link",
               "state": {
-                "file": "Mind-Map.canvas",
+                "file": "Notes/Handle HTTP Response.md",
                 "linksCollapsed": false,
                 "unlinkedCollapsed": true
               }
@@ -128,7 +125,7 @@
             "state": {
               "type": "outline",
               "state": {
-                "file": "Mind-Map.canvas"
+                "file": "Notes/Handle HTTP Response.md"
               }
             }
           }
@@ -149,14 +146,14 @@
       "command-palette:Open command palette": false
     }
   },
-  "active": "6574d5c77c120358",
+  "active": "48308f0c09450ef0",
   "lastOpenFiles": [
+    "Mind-Map.canvas",
     "Notes",
     "Untitled.md",
     "Notes/Chat App (Rust).md",
     "Notes/TCP Socket - HTTP Handling.md",
     "Notes/Std IO Prelude.md",
-    "Mind-Map.canvas",
     "Notes/Handle HTTP Response.md"
   ]
 }

@@ -1,13 +1,13 @@
+mod cache;
 mod request;
 
-use crate::request::Request;
+use crate::{cache::Cache, request::Request};
 use flate2::{write::GzEncoder, Compression};
 use std::{
-    collections::HashMap,
     fs,
     io::prelude::*,
     net::{TcpListener, TcpStream},
-    sync::{Arc, RwLock},
+    sync::Arc,
     thread,
     time::Instant,
 };
@@ -37,7 +37,7 @@ impl Headers {
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
-    let shared_cache = Arc::new(RwLock::new(HashMap::new()));
+    let shared_cache = Cache::new();
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
@@ -54,22 +54,20 @@ async fn main() {
     }
 }
 
-fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) {
+fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<Cache>) {
     let request = Request::new(&mut stream);
     let request_path = respond(stream, &request, shared);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
 }
 
-fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) -> &'a String {
-    if let Ok(shared_cache) = shared.read() {
-        if let Some(response) = shared_cache.get(&request.path) {
-            match stream.write_all(response) {
-                Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
-                _ => (),
-            }
-            return &request.path;
+fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<Cache>) -> &'a String {
+    if let Some(response) = shared.get_data(&request.path) {
+        match stream.write_all(&response) {
+            Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
+            _ => (),
         }
+        return &request.path;
     }
 
     let content = get_contents(&request.path);
@@ -92,9 +90,8 @@ fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<RwLock<H
     ]
     .concat();
 
-    if let Ok(mut shared_cache) = shared.write() {
-        shared_cache.insert(request.path.clone(), response.clone());
-    }
+    // TODO: Check to improve time with multithreading
+    shared.set_data(request.path.clone(), response.clone());
 
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),

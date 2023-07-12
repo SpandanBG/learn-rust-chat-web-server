@@ -1,10 +1,10 @@
 mod constants;
 
+use constants::{DEFAULT_REQUEST_METHOD, DEFAULT_REQUEST_PATH};
 use std::{
     io::{prelude::*, BufReader},
     net::TcpStream,
 };
-use constants::{DEFAULT_REQUEST_METHOD, DEFAULT_REQUEST_PATH};
 
 pub struct Request {
     pub method: String,
@@ -15,15 +15,12 @@ impl Request {
     pub fn new(stream: &mut TcpStream) -> Request {
         let buf_reader = BufReader::new(stream);
 
-        let http_request_raw: Vec<_> = buf_reader
+        let mut http_request_iter = buf_reader
             .lines()
             .map(|result| result.unwrap())
-            .take_while(|line| !line.is_empty())
-            .collect();
+            .take_while(|line| !line.is_empty());
 
-        let mut request_iter = http_request_raw.iter();
-
-        let request_path = request_iter.next();
+        let request_path = http_request_iter.next();
         if request_path.is_none() {
             println!("could not extract request path from request");
             return Request::default();
@@ -33,16 +30,8 @@ impl Request {
         let mut request_path_iter = request_path.split_whitespace();
 
         Request {
-            method: String::from(
-                request_path_iter
-                    .next()
-                    .unwrap_or(DEFAULT_REQUEST_METHOD),
-            ),
-            path: String::from(
-                request_path_iter
-                    .next()
-                    .unwrap_or(DEFAULT_REQUEST_PATH),
-            ),
+            method: String::from(request_path_iter.next().unwrap_or(DEFAULT_REQUEST_METHOD)),
+            path: String::from(request_path_iter.next().unwrap_or(DEFAULT_REQUEST_PATH)),
         }
     }
 

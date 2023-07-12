@@ -1,14 +1,17 @@
+mod request;
+
+use crate::request::Request;
 use flate2::{write::GzEncoder, Compression};
-use tokio;
 use std::{
     collections::HashMap,
     fs,
-    io::{prelude::*, BufReader},
+    io::prelude::*,
     net::{TcpListener, TcpStream},
     sync::{Arc, RwLock},
     thread,
     time::Instant,
 };
+use tokio;
 
 const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
@@ -51,38 +54,27 @@ async fn main() {
     }
 }
 
-fn handle_connection(
-    stream: TcpStream,
-    now: Instant,
-    shared: Arc<RwLock<HashMap<String, Vec<u8>>>>,
-) {
-    let request_path = respond(stream, shared);
+fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) {
+    let request = Request::new(&mut stream);
+    let request_path = respond(stream, &request, shared);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
 }
 
-fn respond(mut stream: TcpStream, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) -> String {
-    let buf_reader = BufReader::new(&stream);
-
-    let request_path = get_request_path(buf_reader);
-    if request_path.is_none() {
-        return String::new();
-    }
-    let request_path = request_path.unwrap();
-
+fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>) -> &'a String {
     if let Ok(shared_cache) = shared.read() {
-        if let Some(response) = shared_cache.get(&request_path) {
+        if let Some(response) = shared_cache.get(&request.path) {
             match stream.write_all(response) {
                 Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
                 _ => (),
             }
-            return request_path;
+            return &request.path;
         }
     }
 
-    let content = get_contents(&request_path);
+    let content = get_contents(&request.path);
     if content.is_none() {
-        return request_path;
+        return &request.path;
     }
     let (response_body, response_type) = content.unwrap();
     let response_body = gzip_response_body(&response_body);
@@ -101,7 +93,7 @@ fn respond(mut stream: TcpStream, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>)
     .concat();
 
     if let Ok(mut shared_cache) = shared.write() {
-        shared_cache.insert(request_path.clone(), response.clone());
+        shared_cache.insert(request.path.clone(), response.clone());
     }
 
     match stream.write_all(&response) {
@@ -109,27 +101,7 @@ fn respond(mut stream: TcpStream, shared: Arc<RwLock<HashMap<String, Vec<u8>>>>)
         _ => (),
     }
 
-    request_path
-}
-
-fn get_request_path(buf_reader: BufReader<&TcpStream>) -> Option<String> {
-    let request_line = buf_reader.lines().next();
-    if request_line.is_none() {
-        return None;
-    }
-
-    let request_line = request_line.unwrap();
-    if request_line.is_err() {
-        return None;
-    }
-
-    let request_line = request_line.unwrap();
-    let mut request_line = request_line.split_whitespace().skip(1);
-
-    if let Some(path) = request_line.next() {
-        return Some(path.to_owned());
-    }
-    None
+    &request.path
 }
 
 fn get_content_type(file_type: &str) -> String {

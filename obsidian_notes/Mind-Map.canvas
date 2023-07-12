@@ -1,0 +1,13 @@
+{
+	"nodes":[
+		{"type":"file","file":"Notes/Handle HTTP Response.md","id":"29757122e4e265c9","x":360,"y":-800,"width":560,"height":500,"color":"6"},
+		{"type":"file","file":"Notes/TCP Socket - HTTP Handling.md","id":"d85fd7603c585a81","x":360,"y":-1400,"width":560,"height":480,"color":"6"},
+		{"type":"file","file":"Notes/Chat App (Rust).md","id":"c21cd2a7af5cb145","x":-520,"y":-300,"width":400,"height":400,"color":"4"},
+		{"type":"file","file":"Notes/Std IO Prelude.md","id":"35dcb3d342e4b442","x":1260,"y":-1460,"width":400,"height":400,"color":"1"}
+	],
+	"edges":[
+		{"id":"cdb3fd208cf79ea5","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"d85fd7603c585a81","toSide":"left"},
+		{"id":"c9c39df8179864e8","fromNode":"d85fd7603c585a81","fromSide":"right","toNode":"35dcb3d342e4b442","toSide":"left"},
+		{"id":"975c0f4e9aa7f76a","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"29757122e4e265c9","toSide":"left"}
+	]
+}

@@ -8,7 +8,6 @@ use std::{
     io::prelude::*,
     net::{TcpListener, TcpStream},
     sync::Arc,
-    thread,
     time::Instant,
 };
 use tokio;

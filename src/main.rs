@@ -4,11 +4,10 @@ mod request;
 use crate::{cache::Cache, request::Request};
 use flate2::{write::GzEncoder, Compression};
 use std::{
-    collections::HashMap,
     fs,
     io::prelude::*,
     net::{TcpListener, TcpStream},
-    sync::{Arc, RwLock},
+    sync::Arc,
     thread,
     time::Instant,
 };

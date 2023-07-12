@@ -2,7 +2,6 @@ use std::{
     collections::HashMap,
     sync::{Arc, RwLock},
 };
-use tokio;
 
 pub struct Cache {
     cached_data: RwLock<HashMap<String, Vec<u8>>>,

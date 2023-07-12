@@ -1,3 +1,6 @@
 /target
 
 *.report.html
+
+/.vscode
+/notes/.obsidian

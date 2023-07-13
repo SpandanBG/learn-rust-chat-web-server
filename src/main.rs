@@ -84,7 +84,6 @@ fn respond(mut stream: TcpStream, request: &Request, shared: Arc<Cache>) {
     ]
     .concat();
 
-
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
         _ => (),

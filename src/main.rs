@@ -1,14 +1,13 @@
 mod cache;
 mod request;
 
-use crate::{cache::AsyncCache, request::Request};
+use crate::{cache::Cache, request::Request};
 use flate2::{write::GzEncoder, Compression};
 use std::{
     fs,
     io::prelude::*,
     net::{TcpListener, TcpStream},
     sync::Arc,
-    time::Instant,
 };
 use tokio;
 
@@ -36,14 +35,13 @@ impl Headers {
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
-    let shared_cache = AsyncCache::new();
+    let shared_cache = Cache::new();
 
     for maybe_stream in listener.incoming() {
-        let now = Instant::now();
         let shared = Arc::clone(&shared_cache);
         match maybe_stream {
             Ok(stream) => {
-                tokio::spawn(handle_connection(stream, now, shared));
+                tokio::spawn(handle_connection(stream, shared));
                 ()
             }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
@@ -51,26 +49,25 @@ async fn main() {
     }
 }
 
-async fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<AsyncCache>) {
+async fn handle_connection(mut stream: TcpStream, shared: Arc<Cache>) {
     let request = Request::new(&mut stream);
-    let request_path = respond(stream, &request, shared);
-    let elapsed = now.elapsed();
-    println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
+    respond(stream, &request, shared);
 }
 
-fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<AsyncCache>) -> &'a String {
+fn respond(mut stream: TcpStream, request: &Request, shared: Arc<Cache>) {
     if let Some(response) = shared.get_data(&request.path) {
         match stream.write_all(&response) {
             Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
             _ => (),
         }
-        return &request.path;
+        return;
     }
 
     let content = get_contents(&request.path);
     if content.is_none() {
-        return &request.path;
+        return;
     }
+
     let (response_body, response_type) = content.unwrap();
     let response_body = gzip_response_body(&response_body);
 
@@ -87,14 +84,13 @@ fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<AsyncCac
     ]
     .concat();
 
-    shared.set_data(&request.path, &response);
 
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
         _ => (),
     }
 
-    &request.path
+    let _ = shared.async_set_data(request.path.clone(), response);
 }
 
 fn get_content_type(file_type: &str) -> String {

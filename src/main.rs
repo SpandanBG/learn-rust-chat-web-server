@@ -1,13 +1,14 @@
 mod cache;
 mod request;
 
-use crate::{cache::AsyncCache, request::Request};
+use crate::{cache::Cache, request::Request};
 use flate2::{write::GzEncoder, Compression};
 use std::{
     fs,
     io::prelude::*,
     net::{TcpListener, TcpStream},
     sync::Arc,
+    thread,
     time::Instant,
 };
 use tokio;
@@ -36,14 +37,16 @@ impl Headers {
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
     let listener = TcpListener::bind(SERVER_ADDR).unwrap();
-    let shared_cache = AsyncCache::new();
+    let shared_cache = Cache::new();
 
     for maybe_stream in listener.incoming() {
         let now = Instant::now();
         let shared = Arc::clone(&shared_cache);
         match maybe_stream {
             Ok(stream) => {
-                tokio::spawn(handle_connection(stream, now, shared));
+                thread::spawn(move || {
+                    handle_connection(stream, now, shared);
+                });
                 ()
             }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
@@ -51,14 +54,14 @@ async fn main() {
     }
 }
 
-async fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<AsyncCache>) {
+fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<Cache>) {
     let request = Request::new(&mut stream);
     let request_path = respond(stream, &request, shared);
     let elapsed = now.elapsed();
     println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
 }
 
-fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<AsyncCache>) -> &'a String {
+fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<Cache>) -> &'a String {
     if let Some(response) = shared.get_data(&request.path) {
         match stream.write_all(&response) {
             Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
@@ -87,7 +90,7 @@ fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<AsyncCac
     ]
     .concat();
 
-    shared.set_data(&request.path, &response);
+    let _ = shared.async_set_data(request.path.clone(), response.clone()); 
 
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),

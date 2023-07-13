@@ -8,8 +8,6 @@ use std::{
     io::prelude::*,
     net::{TcpListener, TcpStream},
     sync::Arc,
-    thread,
-    time::Instant,
 };
 use tokio;
 
@@ -40,13 +38,10 @@ async fn main() {
     let shared_cache = Cache::new();
 
     for maybe_stream in listener.incoming() {
-        let now = Instant::now();
         let shared = Arc::clone(&shared_cache);
         match maybe_stream {
             Ok(stream) => {
-                thread::spawn(move || {
-                    handle_connection(stream, now, shared);
-                });
+                tokio::spawn(handle_connection(stream, shared));
                 ()
             }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),
@@ -54,26 +49,25 @@ async fn main() {
     }
 }
 
-fn handle_connection(mut stream: TcpStream, now: Instant, shared: Arc<Cache>) {
+async fn handle_connection(mut stream: TcpStream, shared: Arc<Cache>) {
     let request = Request::new(&mut stream);
-    let request_path = respond(stream, &request, shared);
-    let elapsed = now.elapsed();
-    println!("For {} => Elapsed: {:.2?}", request_path, elapsed);
+    respond(stream, &request, shared);
 }
 
-fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<Cache>) -> &'a String {
+fn respond(mut stream: TcpStream, request: &Request, shared: Arc<Cache>) {
     if let Some(response) = shared.get_data(&request.path) {
         match stream.write_all(&response) {
             Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
             _ => (),
         }
-        return &request.path;
+        return;
     }
 
     let content = get_contents(&request.path);
     if content.is_none() {
-        return &request.path;
+        return;
     }
+
     let (response_body, response_type) = content.unwrap();
     let response_body = gzip_response_body(&response_body);
 
@@ -90,15 +84,12 @@ fn respond<'a>(mut stream: TcpStream, request: &'a Request, shared: Arc<Cache>) 
     ]
     .concat();
 
-    // TODO: Check to improve time with multithreading
-    shared.set_data(request.path.clone(), response.clone());
-
     match stream.write_all(&response) {
         Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
         _ => (),
     }
 
-    &request.path
+    let _ = shared.async_set_data(request.path.clone(), response);
 }
 
 fn get_content_type(file_type: &str) -> String {

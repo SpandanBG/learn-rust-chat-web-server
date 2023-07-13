@@ -14,19 +14,6 @@ impl Cache {
         })
     }
 
-    pub fn set_data(&self, key: String, value: Vec<u8>) {
-        match self.cached_data.write() {
-            Ok(mut cache_writer) => {
-                cache_writer.insert(key, value);
-                ()
-            }
-            Err(err) => {
-                println!("Unable to write to cache => {:.2?}", err);
-                ()
-            }
-        };
-    }
-
     pub fn get_data(&self, key: &String) -> Option<Vec<u8>> {
         match self.cached_data.read() {
             Ok(cache_reader) => match cache_reader.get(key) {
@@ -36,6 +23,19 @@ impl Cache {
             Err(err) => {
                 println!("Unable to read from cache => {:.2?}", err);
                 None
+            }
+        }
+    }
+
+    pub async fn async_set_data(&self, key: String, value: Vec<u8>) {
+        match self.cached_data.write() {
+            Ok(mut cache_writer) => {
+                cache_writer.insert(key, value);
+                ()
+            }
+            Err(err) => {
+                println!("Unable to write to cache => {:.2?}", err);
+                ()
             }
         }
     }

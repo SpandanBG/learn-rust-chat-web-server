@@ -5,6 +5,7 @@ mod status;
 
 use crate::Headers;
 use crate::response::status::Status;
+use crate::response::constants::OK_200_STATUS;
 use std::{io::Error, io::Write, net::TcpStream};
 
 pub struct ResponseHandler<'a> {
@@ -18,8 +19,7 @@ impl<'a> ResponseHandler<'a> {
 
     pub fn build_response(&self, data: &Vec<u8>, headers: &Headers) -> Vec<u8> {
         [
-            Status::new(String::from(constants::OK_200_STATUS)).as_bytes(),
-            headers.as_bytes(),
+            headers.as_bytes(Status::new(String::from(OK_200_STATUS))),
             data.clone(),
         ]
         .concat()

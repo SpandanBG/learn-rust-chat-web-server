@@ -6,18 +6,14 @@ mod status;
 use crate::response::constants::OK_200_STATUS;
 use crate::response::status::Status;
 use crate::Headers;
-use std::{
-    io::Error,
-    io::Write,
-    net::{Shutdown::Both, TcpStream},
-};
+use tokio::{io::AsyncWriteExt, net::TcpStream};
 
-pub struct ResponseHandler<'a> {
-    stream: &'a TcpStream,
+pub struct ResponseHandler {
+    stream: TcpStream,
 }
 
-impl<'a> ResponseHandler<'a> {
-    pub fn new(stream: &'a TcpStream) -> ResponseHandler {
+impl ResponseHandler {
+    pub fn new(stream: TcpStream) -> ResponseHandler {
         ResponseHandler { stream }
     }
 
@@ -29,19 +25,8 @@ impl<'a> ResponseHandler<'a> {
         .concat()
     }
 
-    pub fn write(&mut self, data: &Vec<u8>) {
-        let write_status = self.stream.write_all(&data);
-        self.stream.shutdown(Both).expect("Failed to close stream");
-        let _ = ResponseHandler::log(write_status);
-    }
-
-    async fn log(write_status: Result<(), Error>) {
-        match write_status {
-            Err(err) => {
-                print!("error occured on sending data over http => {:.2?}", err);
-                ()
-            }
-            _ => (),
-        };
+    pub async fn write(&mut self, data: &Vec<u8>) {
+        self.stream.write_all(&data).await.expect("could not write response to stream");
+        self.stream.shutdown().await.expect("could not close connection");
     }
 }

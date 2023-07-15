@@ -86,3 +86,24 @@ Content-Length: 585
     </footer>
 </html>
 ```
+
+## Closing a TCP Stream
+
+To close a TCP stream in Rust, you can call the `close` method on the `TcpStream` object. The `close` method shuts down the TCP connection and releases any associated resources. Here's an example:
+
+```rust
+use std::io::Write;
+use std::net::TcpStream;
+
+fn main() {
+    let stream = TcpStream::connect("127.0.0.1:8080").expect("Failed to connect");
+
+    // Perform operations on the stream...
+
+    // Close the TCP stream
+    stream.shutdown(std::net::Shutdown::Both).expect("Failed to close stream");
+}
+```
+
+The `Shutdown::Both` parameter indicates that we want to shut down both the reading and writing halves of the TCP stream. Alternatively, you can use `Shutdown::Read` or `Shutdown::Write` if you only want to shut down the corresponding halves.
+

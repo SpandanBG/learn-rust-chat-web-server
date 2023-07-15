@@ -1,8 +1,8 @@
 mod constants;
 
 use constants::{DEFAULT_REQUEST_METHOD, DEFAULT_REQUEST_PATH};
-use std::{
-    io::{prelude::*, BufReader},
+use tokio::{
+    io::{AsyncBufReadExt, BufReader},
     net::TcpStream,
 };
 
@@ -12,15 +12,10 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(stream: &mut TcpStream) -> Request {
+    pub async fn new(stream: &mut TcpStream) -> Request {
         let buf_reader = BufReader::new(stream);
 
-        let mut http_request_iter = buf_reader
-            .lines()
-            .map(|result| result.unwrap())
-            .take_while(|line| !line.is_empty());
-
-        let request_path = http_request_iter.next();
+        let request_path = buf_reader.lines().next_line().await.unwrap_or(None);
         if request_path.is_none() {
             println!("could not extract request path from request");
             return Request::default();

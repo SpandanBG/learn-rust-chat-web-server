@@ -11,10 +11,9 @@ use flate2::{write::GzEncoder, Compression};
 use std::{
     fs,
     io::prelude::*,
-    net::{TcpListener, TcpStream},
     sync::Arc,
 };
-use tokio::task;
+use tokio::{task, net::{TcpListener, TcpStream}};
 
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
 const RESOURCE_DIRECTORY: &'static str = "res";
@@ -23,30 +22,26 @@ const INDEX_FILE: &'static str = "/index.html";
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
-    let listener = TcpListener::bind(SERVER_ADDR).unwrap();
+    let listener = TcpListener::bind(SERVER_ADDR).await.unwrap();
     let shared_cache = Cache::new();
 
-    for maybe_stream in listener.incoming() {
+    loop {
+        let (stream, _) = listener.accept().await.expect("Failed to build TCP socket connection with client");
         let shared = Arc::clone(&shared_cache);
-        match maybe_stream {
-            Ok(stream) => {
-                task::spawn(handle_connection(stream, shared));
-                ()
-            }
-            Err(error) => println!("Error occured with a connection => {:.2?}", error),
-        }
+        task::spawn(handle_connection(stream, shared));
     }
 }
 
 async fn handle_connection(mut stream: TcpStream, shared: Arc<Cache>) {
-    let request = Request::new(&mut stream);
-    let mut response = ResponseHandler::new(&stream);
-    respond(&request, &mut response, shared);
+    let request = Request::new(&mut stream).await;
+    let mut response = ResponseHandler::new(stream);
+    respond(&request, &mut response, shared).await;
 }
 
-fn respond(request: &Request, response_handler: &mut ResponseHandler, shared: Arc<Cache>) {
+async fn respond(request: &Request, response_handler: &mut ResponseHandler, shared: Arc<Cache>) {
     if let Some(response) = shared.get_data(&request.path) {
-        return response_handler.write(&response)
+        response_handler.write(&response).await;
+        return ();
     }
 
     let content = get_contents(&request.path);
@@ -59,7 +54,7 @@ fn respond(request: &Request, response_handler: &mut ResponseHandler, shared: Ar
     let response_headers = Headers::new(get_content_type(&response_type), response_body.len());
 
     let response = response_handler.build_response(&response_body, &response_headers);
-    response_handler.write(&response);
+    response_handler.write(&response).await;
     let _ = shared.async_set_data(request.path.clone(), response);
 }
 

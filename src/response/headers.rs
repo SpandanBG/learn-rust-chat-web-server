@@ -17,7 +17,6 @@ impl Headers {
     pub fn as_bytes(&self, status: Status) -> Vec<u8> {
         vec![
             HTTP_VERSION, " ", &status.status_code, "\r\n",
-            "Connection: keep-alive\r\n",
             "Content-Encoding: gzip\r\n",
             "Content-Type: ", &self.content_type, "\r\n",
             "Content-Length: ", &self.content_length, "\r\n\r\n",

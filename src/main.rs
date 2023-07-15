@@ -14,7 +14,7 @@ use std::{
     net::{TcpListener, TcpStream},
     sync::Arc,
 };
-use tokio;
+use tokio::task;
 
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
 const RESOURCE_DIRECTORY: &'static str = "res";
@@ -30,7 +30,7 @@ async fn main() {
         let shared = Arc::clone(&shared_cache);
         match maybe_stream {
             Ok(stream) => {
-                tokio::spawn(handle_connection(stream, shared));
+                task::spawn(handle_connection(stream, shared));
                 ()
             }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),

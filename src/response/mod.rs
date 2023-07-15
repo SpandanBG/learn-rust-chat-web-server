@@ -3,10 +3,14 @@ pub mod headers;
 mod constants;
 mod status;
 
-use crate::Headers;
-use crate::response::status::Status;
 use crate::response::constants::OK_200_STATUS;
-use std::{io::Error, io::Write, net::TcpStream};
+use crate::response::status::Status;
+use crate::Headers;
+use std::{
+    io::Error,
+    io::Write,
+    net::{Shutdown::Both, TcpStream},
+};
 
 pub struct ResponseHandler<'a> {
     stream: &'a TcpStream,
@@ -27,6 +31,7 @@ impl<'a> ResponseHandler<'a> {
 
     pub fn write(&mut self, data: &Vec<u8>) {
         let write_status = self.stream.write_all(&data);
+        self.stream.shutdown(Both).expect("Failed to close stream");
         let _ = ResponseHandler::log(write_status);
     }
 

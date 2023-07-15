@@ -1,7 +1,12 @@
 mod cache;
 mod request;
+mod response;
 
-use crate::{cache::Cache, request::Request};
+use crate::{
+    cache::Cache, 
+    request::Request, 
+    response::{ResponseHandler, headers::Headers},
+};
 use flate2::{write::GzEncoder, Compression};
 use std::{
     fs,
@@ -11,26 +16,10 @@ use std::{
 };
 use tokio;
 
-const HTTP_VERSION: &'static str = "HTTP/2.0";
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
 const RESOURCE_DIRECTORY: &'static str = "res";
-const OK_200_STATUS: &'static str = "200 OK";
 const ROOT_PATH: &'static str = "/";
 const INDEX_FILE: &'static str = "/index.html";
-
-struct Headers {
-    content_type: String,
-    content_length: usize,
-}
-
-impl Headers {
-    fn to_string(&self) -> String {
-        format!(
-            "Content-Encoding: gzip\r\nContent-Type: {}\r\nContent-Length: {}\r\n",
-            self.content_type, self.content_length
-        )
-    }
-}
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
@@ -51,16 +40,13 @@ async fn main() {
 
 async fn handle_connection(mut stream: TcpStream, shared: Arc<Cache>) {
     let request = Request::new(&mut stream);
-    respond(stream, &request, shared);
+    let mut response = ResponseHandler::new(&stream);
+    respond(&request, &mut response, shared);
 }
 
-fn respond(mut stream: TcpStream, request: &Request, shared: Arc<Cache>) {
+fn respond(request: &Request, response_handler: &mut ResponseHandler, shared: Arc<Cache>) {
     if let Some(response) = shared.get_data(&request.path) {
-        match stream.write_all(&response) {
-            Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
-            _ => (),
-        }
-        return;
+        return response_handler.write(&response)
     }
 
     let content = get_contents(&request.path);
@@ -70,25 +56,10 @@ fn respond(mut stream: TcpStream, request: &Request, shared: Arc<Cache>) {
 
     let (response_body, response_type) = content.unwrap();
     let response_body = gzip_response_body(&response_body);
+    let response_headers = Headers::new(get_content_type(&response_type), response_body.len());
 
-    let status = format!("{} {}", HTTP_VERSION, OK_200_STATUS);
-    let headers = Headers {
-        content_length: response_body.len(),
-        content_type: get_content_type(&response_type),
-    }
-    .to_string();
-
-    let response = [
-        format!("{status}\r\n{headers}\r\n").as_bytes().to_owned(),
-        response_body,
-    ]
-    .concat();
-
-    match stream.write_all(&response) {
-        Err(error) => println!("Error occured will writing to stream: {:.2?}", error),
-        _ => (),
-    }
-
+    let response = response_handler.build_response(&response_body, &response_headers);
+    response_handler.write(&response);
     let _ = shared.async_set_data(request.path.clone(), response);
 }
 

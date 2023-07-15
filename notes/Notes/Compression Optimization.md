@@ -1,5 +1,7 @@
 The recommended minimum object size for gzip compression to provide performance benefits typically depends on several factors, including the nature of the content, network conditions, and the capabilities of the server and client involved. However, as a general guideline, a commonly suggested threshold for considering gzip compression is around 1500-2000 bytes.
 
+> Note: Size of `u8` in rust is 1byte.
+
 Gzip compression works by identifying and compressing repetitive or redundant patterns within the data. Smaller objects or data chunks might not contain enough redundancy to make compression worthwhile, resulting in minimal compression gains or even potentially increasing the overall data size due to compression overhead.
 
 Therefore, it's generally more effective to apply gzip compression to larger objects or files. This allows for better compression ratios and a higher likelihood of finding repetitive patterns within the data.

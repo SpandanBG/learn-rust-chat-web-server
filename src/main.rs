@@ -41,7 +41,7 @@ async fn main() {
         let shared = Arc::clone(&shared_cache);
         match maybe_stream {
             Ok(stream) => {
-                tokio::spawn(handle_connection(stream, shared));
+                tokio::task::spawn(handle_connection(stream, shared));
                 ()
             }
             Err(error) => println!("Error occured with a connection => {:.2?}", error),

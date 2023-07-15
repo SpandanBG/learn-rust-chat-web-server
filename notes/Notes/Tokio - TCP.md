@@ -72,3 +72,37 @@ async fn process(socket: TcpStream) {
 
 ### Reading from Tokio TCP Socket
 
+```rust
+use tokio::{
+	io::{AsyncBufReadExt, BufReader},
+	net::TcpStream,
+};
+
+async fn read_from_stream(stream: &mut TcpStream) -> io::Result<()> {
+	let reader = BufReader::new(stream);
+	let mut lines = reader.lines();
+
+	while let Some(line) = lines.next_line().await? {
+		if line.is_empty() {
+			break;
+		}
+
+		println!("{}", line);
+	}
+
+	Ok(())
+}
+```
+
+We obtain an iterator of lines using `lines` method from the `AsyncBufReadExt` trait. By calling `next_line().await`, we asynchronously retrieve the next line from the reader. The loop continues until an empty line is encountered. Each non-empty line is processed (printed in this case).
+
+### Writing & Closing: Tokio TCP Socket
+
+```rust
+use tokio::{io::AsyncWriteExt, net::TcpStream};
+
+async fn write(stream: TcpStream, data: Vec<u8>) {
+	stream.write_all(&data).await.expect("unable to write to stream");
+	stream.shutdown().await.expect("unable to close connection");
+}
+```

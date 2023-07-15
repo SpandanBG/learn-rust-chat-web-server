@@ -1,6 +1,6 @@
 - [x] TCP Socket to read-write HTTP Requests
 - [x] Module to handle request types
 - [x] Module to build response
-- [ ] Add Keep-Alive feature
+- [x] Add Keep-Alive feature
 - [ ] Module to handle compression (GZip / Br)
 - [ ] Module to handle SSL connection

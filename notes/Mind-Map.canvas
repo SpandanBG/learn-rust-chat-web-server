@@ -3,11 +3,11 @@
 		{"type":"file","file":"Notes/HTTP - Optimization.md","id":"e40ab55dc6a190ea","x":-1240,"y":-920,"width":400,"height":400,"color":"2"},
 		{"type":"file","file":"Notes/Handle HTTP Response.md","id":"29757122e4e265c9","x":-1240,"y":-333,"width":400,"height":383,"color":"2"},
 		{"type":"file","file":"Notes/Chat App (Rust).md","id":"c21cd2a7af5cb145","x":-400,"y":-733,"width":400,"height":400,"color":"4"},
-		{"type":"file","file":"Notes/TCP Socket - HTTP Handling.md","id":"d85fd7603c585a81","x":376,"y":-760,"width":560,"height":480,"color":"6"},
 		{"type":"file","file":"Notes/Tokio - Tasks.md","id":"6d6bc1d13b9c054e","x":1520,"y":-480,"width":400,"height":400,"color":"1"},
 		{"type":"file","file":"Notes/Tokio - TCP.md","id":"31203d7ae104537f","x":1520,"y":-960,"width":400,"height":400,"color":"1"},
 		{"type":"file","file":"Notes/Std IO Prelude.md","id":"35dcb3d342e4b442","x":1520,"y":-1560,"width":400,"height":400,"color":"1"},
-		{"id":"6d3f05857bc3dcd2","x":392,"y":-1507,"width":544,"height":547,"color":"6","type":"file","file":"Notes/Http - Keep Alive Header.md"}
+		{"type":"file","file":"Notes/Http - Keep Alive Header.md","id":"6d3f05857bc3dcd2","x":392,"y":-1507,"width":544,"height":547,"color":"6"},
+		{"type":"file","file":"Notes/TCP Socket - HTTP Handling.md","id":"d85fd7603c585a81","x":376,"y":-760,"width":560,"height":480,"color":"6"}
 	],
 	"edges":[
 		{"id":"cdb3fd208cf79ea5","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"d85fd7603c585a81","toSide":"left"},

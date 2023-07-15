@@ -1,19 +1,20 @@
 mod cache;
+mod compression;
 mod request;
 mod response;
 
 use crate::{
-    cache::Cache, 
-    request::Request, 
-    response::{ResponseHandler, headers::Headers},
+    cache::Cache,
+    compression::CompressedData,
+    request::Request,
+    response::{headers::Headers, ResponseHandler},
 };
-use flate2::{write::GzEncoder, Compression};
-use std::{
-    fs,
-    io::prelude::*,
-    sync::Arc,
+
+use std::{fs, sync::Arc};
+use tokio::{
+    net::{TcpListener, TcpStream},
+    task,
 };
-use tokio::{task, net::{TcpListener, TcpStream}};
 
 const SERVER_ADDR: &'static str = "127.0.0.1:8080";
 const RESOURCE_DIRECTORY: &'static str = "res";
@@ -26,7 +27,10 @@ async fn main() {
     let shared_cache = Cache::new();
 
     loop {
-        let (stream, _) = listener.accept().await.expect("Failed to build TCP socket connection with client");
+        let (stream, _) = listener
+            .accept()
+            .await
+            .expect("Failed to build TCP socket connection with client");
         let shared = Arc::clone(&shared_cache);
         task::spawn(handle_connection(stream, shared));
     }
@@ -50,10 +54,14 @@ async fn respond(request: &Request, response_handler: &mut ResponseHandler, shar
     }
 
     let (response_body, response_type) = content.unwrap();
-    let response_body = gzip_response_body(&response_body);
-    let response_headers = Headers::new(get_content_type(&response_type), response_body.len());
+    let response_body = CompressedData::new(&response_body);
+    let response_headers = Headers::new(
+        response_body.compressed_type,
+        get_content_type(&response_type),
+        response_body.len(),
+    );
 
-    let response = response_handler.build_response(&response_body, &response_headers);
+    let response = response_handler.build_response(&response_body.data, &response_headers);
     response_handler.write(&response).await;
     let _ = shared.async_set_data(request.path.clone(), response);
 }
@@ -85,22 +93,5 @@ fn get_contents(filename: &str) -> Option<(Vec<u8>, String)> {
             println!("For {} => {:?}", path, error_message);
             None
         }
-    }
-}
-
-fn gzip_response_body(response_body: &[u8]) -> Vec<u8> {
-    let mut encoder = GzEncoder::new(Vec::new(), Compression::default());
-
-    let encoding_body_result = encoder.write_all(response_body);
-    if encoding_body_result.is_err() {
-        panic!("Error occured while encoding body")
-    }
-
-    match encoder.finish() {
-        Ok(compressed_response) => compressed_response,
-        Err(error) => panic!(
-            "Error occured while finishing encoding response => {:.2?}",
-            error
-        ),
     }
 }

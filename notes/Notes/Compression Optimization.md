@@ -13,3 +13,9 @@ In practice, it's recommended to perform benchmarking and testing with your spec
 Additionally, keep in mind that modern web servers and browsers often negotiate compression automatically, considering factors like the content type and client support. Therefore, it's a good practice to enable gzip compression at the server level and let the negotiation between the server and client determine when compression is beneficial.
 
 Ultimately, the optimal minimum object size for gzip compression depends on your specific use case and the characteristics of the content and network involved.
+
+## Akamai's Compression Size Recommendation
+
+The minimum size Akamai will compress the requested object when sending it to the end user: The minimum size is 860 bytes.
+
+The reasons 860 bytes is the minimum size for compression is twofold: (1) The overhead of compressing an object under 860 bytes outweighs performance gain. (2) Objects under 860 bytes can be transmitted via a single packet anyway, so there isn't a compelling reason to compress them.

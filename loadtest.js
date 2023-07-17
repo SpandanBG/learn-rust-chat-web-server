@@ -3,11 +3,12 @@
 import http from 'k6/http';
 import { sleep, check } from 'k6';
 
-const HOST = "http://localhost:8080"
+const HOST = "https://localhost"
 
 export const options = {
     vus: 1000,
     duration: "30s",
+    insecureSkipTLSVerify: true,
 }
 
 export default function() {

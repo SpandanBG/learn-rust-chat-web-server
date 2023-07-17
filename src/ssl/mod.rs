@@ -6,7 +6,7 @@ use rustls::{Certificate, PrivateKey};
 use rustls_pemfile;
 use std::{fs::File, io::BufReader, sync::Arc};
 use tokio::net::TcpStream;
-use tokio_rustls::{TlsAcceptor, server::TlsStream};
+use tokio_rustls::{server::TlsStream, TlsAcceptor};
 
 pub struct SSL {
     acceptor: TlsAcceptor,
@@ -29,15 +29,14 @@ impl SSL {
     }
 
     pub async fn get_tls_stream(&self, stream: TcpStream) -> TlsStream<TcpStream> {
-      match self.acceptor.accept(stream).await{
-        Ok(tls_stream) => tls_stream,
-        Err(error) => {
-
-            panic!("failed to convert to tls stream {:.2?}", error);
+        match self.acceptor.accept(stream).await {
+            Ok(tls_stream) => tls_stream,
+            Err(error) => {
+                panic!("failed to convert to tls stream {:.2?}", error);
+            }
         }
-      }
     }
-    
+
     fn load_certs_from_prem(path: &str) -> Vec<Certificate> {
         let file = File::open(path).expect(&format!("unable to open file {:?}", path));
         let mut reader = BufReader::new(file);

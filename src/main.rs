@@ -18,7 +18,7 @@ use tokio::{
     task,
 };
 
-const SERVER_ADDR: &'static str = "127.0.0.1:8080";
+const SERVER_ADDR: &'static str = "127.0.0.1:443";
 const RESOURCE_DIRECTORY: &'static str = "res";
 const ROOT_PATH: &'static str = "/";
 const INDEX_FILE: &'static str = "/index.html";

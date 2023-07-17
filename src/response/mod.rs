@@ -7,13 +7,14 @@ use crate::response::constants::OK_200_STATUS;
 use crate::response::status::Status;
 use crate::Headers;
 use tokio::{io::AsyncWriteExt, net::TcpStream};
+use tokio_rustls::server::TlsStream;
 
 pub struct ResponseHandler {
-    stream: TcpStream,
+    stream: TlsStream<TcpStream>,
 }
 
 impl ResponseHandler {
-    pub fn new(stream: TcpStream) -> ResponseHandler {
+    pub fn new(stream: TlsStream<TcpStream>) -> ResponseHandler {
         ResponseHandler { stream }
     }
 
@@ -26,7 +27,14 @@ impl ResponseHandler {
     }
 
     pub async fn write(&mut self, data: &Vec<u8>) {
-        self.stream.write_all(&data).await.expect("could not write response to stream");
-        self.stream.shutdown().await.expect("could not close connection");
+        self.stream
+            .write_all(&data)
+            .await
+            .expect("could not write response to stream");
+
+        self.stream
+            .shutdown()
+            .await
+            .expect("could not close connection");
     }
 }

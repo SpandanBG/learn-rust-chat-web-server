@@ -5,6 +5,7 @@ use tokio::{
     io::{AsyncBufReadExt, BufReader},
     net::TcpStream,
 };
+use tokio_rustls::server::TlsStream;
 
 pub struct Request {
     pub method: String,
@@ -12,7 +13,7 @@ pub struct Request {
 }
 
 impl Request {
-    pub async fn new(stream: &mut TcpStream) -> Request {
+    pub async fn new(stream: &mut TlsStream<TcpStream>) -> Request {
         let buf_reader = BufReader::new(stream);
 
         let request_path = buf_reader.lines().next_line().await.unwrap_or(None);

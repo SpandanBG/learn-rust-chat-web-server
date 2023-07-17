@@ -9,7 +9,9 @@
 		{"type":"file","file":"Notes/HTTP - Optimization.md","id":"e40ab55dc6a190ea","x":-1240,"y":-1280,"width":400,"height":400,"color":"2"},
 		{"type":"file","file":"Notes/Handle HTTP Response.md","id":"29757122e4e265c9","x":-1240,"y":-760,"width":400,"height":383,"color":"2"},
 		{"type":"file","file":"Notes/Compression Optimization.md","id":"100b02e0880ee518","x":-1240,"y":-240,"width":400,"height":400,"color":"2"},
-		{"id":"307cb7962f252cc4","x":376,"y":-87,"width":560,"height":495,"color":"6","type":"file","file":"Notes/SSL.md"}
+		{"type":"file","file":"Notes/SSL.md","id":"307cb7962f252cc4","x":376,"y":-87,"width":560,"height":495,"color":"6"},
+		{"type":"file","file":"Notes/Trust Certificate in Windows.md","id":"ed95a47c43094e53","x":1480,"y":179,"width":400,"height":400,"color":"1"},
+		{"id":"6513a2185994a057","x":1480,"y":840,"width":400,"height":400,"color":"1","type":"file","file":"Notes/HTTP - TLS Handshake Optimization.md"}
 	],
 	"edges":[
 		{"id":"cdb3fd208cf79ea5","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"d85fd7603c585a81","toSide":"left"},
@@ -20,6 +22,8 @@
 		{"id":"39237c4192c7387a","fromNode":"e40ab55dc6a190ea","fromSide":"right","toNode":"6d3f05857bc3dcd2","toSide":"left"},
 		{"id":"1b2c828e686b0f9b","fromNode":"c21cd2a7af5cb145","fromSide":"left","toNode":"29757122e4e265c9","toSide":"right"},
 		{"id":"f55bd69a6c660533","fromNode":"c21cd2a7af5cb145","fromSide":"left","toNode":"100b02e0880ee518","toSide":"right"},
-		{"id":"64cb4734a874908f","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"307cb7962f252cc4","toSide":"left"}
+		{"id":"64cb4734a874908f","fromNode":"c21cd2a7af5cb145","fromSide":"right","toNode":"307cb7962f252cc4","toSide":"left"},
+		{"id":"1d362ea58ca6ec78","fromNode":"307cb7962f252cc4","fromSide":"right","toNode":"ed95a47c43094e53","toSide":"left"},
+		{"id":"a5e285718cde3c70","fromNode":"307cb7962f252cc4","fromSide":"right","toNode":"6513a2185994a057","toSide":"left"}
 	]
 }

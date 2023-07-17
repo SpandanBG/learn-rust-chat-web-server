@@ -1,6 +1,7 @@
 mod cache;
 mod compression;
 mod request;
+mod resource;
 mod response;
 mod ssl;
 
@@ -8,20 +9,18 @@ use crate::{
     cache::Cache,
     compression::CompressedData,
     request::Request,
+    resource::Resource,
     response::{headers::Headers, ResponseHandler},
     ssl::SSL,
 };
 
-use std::{fs, sync::Arc};
+use std::sync::Arc;
 use tokio::{
     net::{TcpListener, TcpStream},
     task,
 };
 
 const SERVER_ADDR: &'static str = "127.0.0.1:443";
-const RESOURCE_DIRECTORY: &'static str = "res";
-const ROOT_PATH: &'static str = "/";
-const INDEX_FILE: &'static str = "/index.html";
 
 #[tokio::main(flavor = "multi_thread", worker_threads = 16)]
 async fn main() {
@@ -52,50 +51,20 @@ async fn respond(request: &Request, response_handler: &mut ResponseHandler, shar
         return ();
     }
 
-    let content = get_contents(&request.path);
-    if content.is_none() {
+    let resource = Resource::new(&request.path);
+    if resource.is_none() {
         return;
     }
+    let resource = resource.unwrap();
 
-    let (response_body, response_type) = content.unwrap();
-    let response_body = CompressedData::new(&response_body);
+    let response_body = CompressedData::new(&resource.data);
     let response_headers = Headers::new(
         response_body.compressed_type,
-        get_content_type(&response_type),
+        resource.resource_type.get_mime_type(),
         response_body.len(),
     );
 
     let response = response_handler.build_response(&response_body.data, &response_headers);
     response_handler.write(&response).await;
     let _ = shared.async_set_data(request.path.clone(), response);
-}
-
-fn get_content_type(file_type: &str) -> String {
-    match file_type {
-        "html" => "text/html".to_owned(),
-        "js" => "text/javascript".to_owned(),
-        "css" => "text/css".to_owned(),
-        "ico" => "image/x-icon".to_owned(),
-        "xml" => "application/xml".to_owned(),
-        _ => "text/plain".to_owned(),
-    }
-}
-
-fn get_contents(filename: &str) -> Option<(Vec<u8>, String)> {
-    let mut path = RESOURCE_DIRECTORY.clone().to_owned();
-    path.push_str(match filename {
-        ROOT_PATH => INDEX_FILE,
-        _ => filename,
-    });
-
-    let file_type = path.split('.');
-    let file_type = file_type.last().unwrap();
-
-    match fs::read(&path) {
-        Ok(file_content) => Some((file_content, file_type.to_owned())),
-        Err(error_message) => {
-            println!("For {} => {:?}", path, error_message);
-            None
-        }
-    }
 }

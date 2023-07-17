@@ -33,7 +33,7 @@ clean:
 	$(RM_DIR) $(TARGET_DIR)
 
 lighthouse:
-	lighthouse http://localhost:8080 --view --output-path=./$(LIGHTHOUSE_FILE)
+	lighthouse https://localhost --chrome-flags=--ignore-certificate-errors --view --output-path=./$(LIGHTHOUSE_FILE)
 
 clean-lighthouse:
 	$(RM) $(LIGHTHOUSE_FILE) 

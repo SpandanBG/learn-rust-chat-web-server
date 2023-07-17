@@ -1,6 +1,6 @@
 mod constants;
 
-use self::constants::{CERTIFICATE_CHAIN_FILE_PATH, PRIVATE_KEY_FILE_PATH};
+use self::constants::{CERTIFICATE_FILE_PATH, PRIVATE_KEY_FILE_PATH};
 
 use rustls::{Certificate, PrivateKey};
 use rustls_pemfile;
@@ -15,7 +15,7 @@ pub struct SSL {
 impl SSL {
     pub fn new() -> SSL {
         let private_key = SSL::load_private_key_from_file(PRIVATE_KEY_FILE_PATH);
-        let cert_chain = SSL::load_certs_from_prem(CERTIFICATE_CHAIN_FILE_PATH);
+        let cert_chain = SSL::load_certs_from_prem(CERTIFICATE_FILE_PATH);
 
         let config = rustls::ServerConfig::builder()
             .with_safe_defaults()

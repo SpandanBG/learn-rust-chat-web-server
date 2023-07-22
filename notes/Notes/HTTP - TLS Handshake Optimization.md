@@ -18,7 +18,7 @@ Remember that TLS handshaking time is influenced by various factors, including n
 
 ---
 
-## Example In Rust using Rustls
+## Session Resumption: Example In Rust using Rustls
 
 ```rust
 use std::fs;

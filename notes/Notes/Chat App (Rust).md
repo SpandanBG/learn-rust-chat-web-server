@@ -2,5 +2,8 @@
 - [x] Module to handle request types
 - [x] Module to build response
 - [x] Add Keep-Alive feature
-- [ ] Module to handle compression (GZip / Br)
-- [ ] Module to handle SSL connection
+- [x] Module to handle compression (GZip / Br)
+- [x] Module to handle SSL connection
+
+### Optimizations:
+- [ ] Session Resumption Implementation
